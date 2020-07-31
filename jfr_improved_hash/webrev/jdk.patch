@@ -1,0 +1,22 @@
+--- old/src/hotspot/share/jfr/recorder/stacktrace/jfrStackTrace.cpp	2020-07-31 09:20:23.000000000 +0200
++++ new/src/hotspot/share/jfr/recorder/stacktrace/jfrStackTrace.cpp	2020-07-31 09:20:23.000000000 +0200
+@@ -240,6 +240,7 @@
+     vfs.next();
+   }
+ 
++  _hash = 1;
+   while (!vfs.at_end()) {
+     if (count >= _max_frames) {
+       _reached_root = false;
+@@ -255,8 +256,9 @@
+     else {
+       bci = vfs.bci();
+     }
+-    // Can we determine if it's inlined?
+-    _hash = (_hash << 2) + (unsigned int)(((size_t)mid >> 2) + (bci << 4) + type);
++    _hash = (_hash * 31) + mid;
++    _hash = (_hash * 31) + bci;
++    _hash = (_hash * 31) + type;
+     _frames[count] = JfrStackFrame(mid, bci, type, method->method_holder());
+     vfs.next();
+     count++;

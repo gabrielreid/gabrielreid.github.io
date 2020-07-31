@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta charset="utf-8">
+<meta http-equiv="cache-control" content="no-cache" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="-1" />
+<!--
+   Note to customizers: the body of the webrev is IDed as SUNWwebrev
+   to allow easy overriding by users of webrev via the userContent.css
+   mechanism available in some browsers.
+
+   For example, to have all "removed" information be red instead of
+   brown, set a rule in your userContent.css file like:
+
+       body#SUNWwebrev span.removed { color: red ! important; }
+-->
+<style type="text/css" media="screen">
+body {
+    background-color: #eeeeee;
+}
+hr {
+    border: none 0;
+    border-top: 1px solid #aaa;
+    height: 1px;
+}
+div.summary {
+    font-size: .8em;
+    border-bottom: 1px solid #aaa;
+    padding-left: 1em;
+    padding-right: 1em;
+}
+div.summary h2 {
+    margin-bottom: 0.3em;
+}
+div.summary table th {
+    text-align: right;
+    vertical-align: top;
+    white-space: nowrap;
+}
+span.lineschanged {
+    font-size: 0.7em;
+}
+span.oldmarker {
+    color: red;
+    font-size: large;
+    font-weight: bold;
+}
+span.newmarker {
+    color: green;
+    font-size: large;
+    font-weight: bold;
+}
+span.removed {
+    color: brown;
+}
+span.changed {
+    color: blue;
+}
+span.new {
+    color: blue;
+    font-weight: bold;
+}
+a.print { font-size: x-small; }
+
+</style>
+
+<style type="text/css" media="print">
+pre { font-size: 0.8em; font-family: courier, monospace; }
+span.removed { color: #444; font-style: italic }
+span.changed { font-weight: bold; }
+span.new { font-weight: bold; }
+span.newmarker { font-size: 1.2em; font-weight: bold; }
+span.oldmarker { font-size: 1.2em; font-weight: bold; }
+a.print {display: none}
+hr { border: none 0; border-top: 1px solid #aaa; height: 1px; }
+</style>
+
+<title>jdk Sdiff src/hotspot/share/jfr/recorder/stacktrace </title>
+</head><body id="SUNWwebrev">
+<center>&lt prev <a href='../../../../../../index.html' target='_top'>index</a> next &gt</center>
+<h2>src/hotspot/share/jfr/recorder/stacktrace/jfrStackTrace.cpp</h2>
+<a class="print" href="javascript:print()">Print this page</a>
+<pre></pre>
+
+<table><tr valign="top">
+<td><pre>
+
+</pre><hr></hr><pre>
+ 223 
+ 224 void JfrStackTrace::resolve_linenos() const {
+ 225   for (unsigned int i = 0; i &lt; _nr_of_frames; i++) {
+ 226     _frames[i].resolve_lineno();
+ 227   }
+ 228   _lineno = true;
+ 229 }
+ 230 
+ 231 bool JfrStackTrace::record_safe(JavaThread* thread, int skip) {
+ 232   assert(thread == Thread::current(), "Thread stack needs to be walkable");
+ 233   vframeStream vfs(thread);
+ 234   u4 count = 0;
+ 235   _reached_root = true;
+ 236   for (int i = 0; i &lt; skip; i++) {
+ 237     if (vfs.at_end()) {
+ 238       break;
+ 239     }
+ 240     vfs.next();
+ 241   }
+ 242 
+
+ 243   while (!vfs.at_end()) {
+ 244     if (count &gt;= _max_frames) {
+ 245       _reached_root = false;
+ 246       break;
+ 247     }
+ 248     const Method* method = vfs.method();
+ 249     const traceid mid = JfrTraceId::load(method);
+ 250     int type = vfs.is_interpreted_frame() ? JfrStackFrame::FRAME_INTERPRETER : JfrStackFrame::FRAME_JIT;
+ 251     int bci = 0;
+ 252     if (method-&gt;is_native()) {
+ 253       type = JfrStackFrame::FRAME_NATIVE;
+ 254     }
+ 255     else {
+ 256       bci = vfs.bci();
+ 257     }
+<span class="changed"> 258     // Can we determine if it's inlined?</span>
+<span class="changed"> 259     _hash = (_hash &lt;&lt; 2) + (unsigned int)(((size_t)mid &gt;&gt; 2) + (bci &lt;&lt; 4) + type);</span>
+
+ 260     _frames[count] = JfrStackFrame(mid, bci, type, method-&gt;method_holder());
+ 261     vfs.next();
+ 262     count++;
+ 263   }
+ 264 
+ 265   _nr_of_frames = count;
+ 266   return true;
+ 267 }
+ 268 
+</pre></td><td><pre>
+
+</pre><hr></hr><pre>
+ 223 
+ 224 void JfrStackTrace::resolve_linenos() const {
+ 225   for (unsigned int i = 0; i &lt; _nr_of_frames; i++) {
+ 226     _frames[i].resolve_lineno();
+ 227   }
+ 228   _lineno = true;
+ 229 }
+ 230 
+ 231 bool JfrStackTrace::record_safe(JavaThread* thread, int skip) {
+ 232   assert(thread == Thread::current(), "Thread stack needs to be walkable");
+ 233   vframeStream vfs(thread);
+ 234   u4 count = 0;
+ 235   _reached_root = true;
+ 236   for (int i = 0; i &lt; skip; i++) {
+ 237     if (vfs.at_end()) {
+ 238       break;
+ 239     }
+ 240     vfs.next();
+ 241   }
+ 242 
+<span class="new"> 243   _hash = 1;</span>
+ 244   while (!vfs.at_end()) {
+ 245     if (count &gt;= _max_frames) {
+ 246       _reached_root = false;
+ 247       break;
+ 248     }
+ 249     const Method* method = vfs.method();
+ 250     const traceid mid = JfrTraceId::load(method);
+ 251     int type = vfs.is_interpreted_frame() ? JfrStackFrame::FRAME_INTERPRETER : JfrStackFrame::FRAME_JIT;
+ 252     int bci = 0;
+ 253     if (method-&gt;is_native()) {
+ 254       type = JfrStackFrame::FRAME_NATIVE;
+ 255     }
+ 256     else {
+ 257       bci = vfs.bci();
+ 258     }
+<span class="changed"> 259     _hash = (_hash * 31) + mid;</span>
+<span class="changed"> 260     _hash = (_hash * 31) + bci;</span>
+<span class="changed"> 261     _hash = (_hash * 31) + type;</span>
+ 262     _frames[count] = JfrStackFrame(mid, bci, type, method-&gt;method_holder());
+ 263     vfs.next();
+ 264     count++;
+ 265   }
+ 266 
+ 267   _nr_of_frames = count;
+ 268   return true;
+ 269 }
+ 270 
+</pre></td>
+</tr></table>
+<center>&lt prev <a href='../../../../../../index.html' target='_top'>index</a> next &gt</center>
+</body></html>
